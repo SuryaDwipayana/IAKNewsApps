@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.example.suryadwipayana.iaknewsapps.BuildConfig;
 import com.example.suryadwipayana.iaknewsapps.R;
@@ -25,7 +27,10 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
 
     private LinearLayoutManager mLayoutManager;
-    private NewsAdapter mAdapter;
+    private NewsAdapter mAdapterDummy;
+    private NewsAdapter mAdapterApi;
+
+    private List<ArticlesItem> mListArticle = new ArrayList<>();
 
     private static final String NEWS_SOURCE = "bbc-news";
     private static final String SORT_BY = "top";
@@ -44,10 +49,11 @@ public class MainActivity extends AppCompatActivity {
                 false
         );
 
-        mAdapter = new NewsAdapter(getDummyData());
+        mAdapterDummy = new NewsAdapter(getDummyData());
+        mAdapterApi = new NewsAdapter(mListArticle());
 
         mRecyclerview.setLayoutManager(mLayoutManager);
-        mRecyclerview.setAdapter(mAdapter);
+        mRecyclerview.setAdapter(mAdapterDummy);
     }
 
     private List<ArticlesItem> getDummyData(){
@@ -74,12 +80,17 @@ public class MainActivity extends AppCompatActivity {
         apiResponseCall.enqueue(new Callback<ApiResponse>() {
             @Override
             public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
-
+                ApiResponse apiResponse = response.body();
+                if (apiResponse != null) {
+                    mListArticle = apiResponse.getArticles();
+                    mAdapterApi.notifyDataSetChanged();
+                }
             }
 
             @Override
             public void onFailure(Call<ApiResponse> call, Throwable t) {
-
+                Toast.makeText(MainActivity.this, "Call Failed" + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "onFailure" + t)
             }
         });
     }
